@@ -31,4 +31,16 @@
   .logout-button:hover {
     background-color: #d9534f; 
   }
+  .logout-notification {
+    position: fixed;
+    
+    top: 10px;
+    right: 10px;
+    background-color: #5cb85c; /* Success color */
+    color: #fff;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    z-index: 100000
+  }
   

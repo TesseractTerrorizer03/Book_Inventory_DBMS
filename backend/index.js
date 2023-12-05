@@ -12,7 +12,6 @@ const pool = new Pool({
   port: 5432, 
 });
 
-// Home Page - Top 10 Books based on user's choice (ratings or sales)
 app.get('/home', async (req, res) => {
   try {
     const sortBy = req.query.sortBy || 'rating'; // Default sorting by rating if not specified in the request query
@@ -48,7 +47,6 @@ app.get('/home', async (req, res) => {
   }
 });
 
-// Endpoint to get top books based on criteria (ratings or sales)
 app.get('/top-books', async (req, res) => {
   try {
     const sortBy = req.query.sortBy || 'rating'; // Default sorting by rating if not specified in the request query
@@ -88,13 +86,12 @@ app.get('/top-books', async (req, res) => {
 
 
 // Purchases. Log of all the orders
-// Updated server route
 app.get('/purchase', async (req, res) => {
   try {
     const cust_id = req.query.customer_id; // Get customer ID from URL path
 
     const query = {
-      text: 'SELECT * FROM ORDERS WHERE customer_id = $1',
+      text: 'SELECT * FROM ORDERS WHERE customer_id = $1 ORDER BY order_date DESC',
       values: [cust_id],
     };
 
@@ -200,7 +197,6 @@ app.post('/place-order', async (req, res) => {
     await client.query(updateBookQuantityQuery);
     client.release();
 
-    // Generate notifications based on book quantity (threshold checking logic here)
 
     res.json({ message: 'Order placed successfully' });
   } catch (error) {
@@ -210,24 +206,140 @@ app.post('/place-order', async (req, res) => {
 
 
 // Modify book details
-app.put('/modify-book/:bookId', async (req, res) => {
+// app.put('/modify', async (req, res) => {
+//   try {
+//     const bookId = req.params.bookId;
+//     const { title, publish, quantity} = req.body;
+
+//     const client = await pool.connect();
+//     const updateBookQuery = {
+//       text: 'UPDATE Books SET title = $1, publish = $2, quantity = $3  WHERE book_id = $4',
+//       values: [title, publish, quantity,bookId],
+//     };
+//     await client.query(updateBookQuery);
+//     client.release();
+
+//     res.json({ message: 'Book details updated successfully' });
+//   } catch (error) {
+//     res.status(500).json({ error: `Error updating book details: ${error.message}` });
+//   }
+// });
+
+// app.put('/modify', async (req, res) => {
+//   try {
+//     const bookId = req.params.bookId;
+//     const { title, publish, quantity } = req.body;
+
+//     const client = await pool.connect();
+
+//     const updateBookQuery = {
+//       text: 'UPDATE Books SET title = $1, publish = $2, quantity = $3  WHERE book_id = $4 RETURNING *',
+//       values: [title, publish, quantity, bookId],
+//     };
+//     const updatedBook = await client.query(updateBookQuery);
+
+//     client.release();
+
+//     if (updatedBook.rows.length === 0) {
+//       return res.status(404).json({ error: 'Book not found' });
+//     }
+
+//     const updatedDetailsQuery = {
+//       text: 'SELECT * FROM Books WHERE book_id = $1',
+//       values: [bookId],
+//     };
+//     const updatedDetails = await pool.query(updatedDetailsQuery);
+
+//     res.json({
+//       message: 'Book details updated successfully',
+//       updatedDetails: updatedDetails.rows[0],
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: `Error updating book details: ${error.message}` });
+//   }
+// });
+
+app.get('/modify', async (req, res) => {
   try {
-    const bookId = req.params.bookId;
-    const { title, author, quantity /* other book details */ } = req.body;
+    const bid = req.query.bookId;  // Use req.params to get the URL parameter
+    const query = {
+      text: 'SELECT * FROM book_details WHERE book_id = $1',
+      values: [bid],
+    };
 
     const client = await pool.connect();
-    const updateBookQuery = {
-      text: 'UPDATE Books SET title = $1, author = $2, quantity = $3 /* update other fields */ WHERE book_id = $4',
-      values: [title, author, quantity /* other values */, bookId],
-    };
-    await client.query(updateBookQuery);
+    const result = await client.query(query);
     client.release();
 
-    res.json({ message: 'Book details updated successfully' });
+    res.json({ orders: result.rows });
+  } catch (error) {
+    res.status(500).json({ error: `Error fetching orders: ${error.message}` });
+  }
+});
+
+
+app.put('/modify', async (req, res) => {
+  try {
+    
+    const bookId = req.query.bookId;
+    const { title, publish, quantity } = req.body;
+
+    const client = await pool.connect();
+
+    // Create an array to store the non-null updates
+    const updateValues = [];
+    const updateParams = [];
+
+    // Check each input and add non-null values to the update array
+    if (title !== null && title !== undefined) {
+      updateValues.push(`title = $${updateValues.length + 1}`);
+      updateParams.push(title);
+    }
+    if (publish !== null && publish !== undefined) {
+      updateValues.push(`publish = $${updateValues.length + 1}`);
+      updateParams.push(publish);
+    }
+    if (quantity !== null && quantity !== undefined) {
+      updateValues.push(`quantity = $${updateValues.length + 1}`);
+      updateParams.push(quantity);
+    }
+
+    // If there are no valid updates, return a response
+    if (updateValues.length === 0) {
+      client.release();
+      return res.status(400).json({ error: 'No valid updates provided' });
+    }
+
+    // Construct the dynamic update query
+    const updateBookQuery = {
+      text: `UPDATE Books SET ${updateValues.join(', ')} WHERE book_id = $${updateParams.length + 1} RETURNING *`,
+      values: [...updateParams, bookId],
+    };
+
+    // Execute the update query
+    const updatedBook = await client.query(updateBookQuery);
+
+    client.release();
+
+    if (updatedBook.rows.length === 0) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    const updatedDetailsQuery = {
+      text: 'SELECT * FROM Books WHERE book_id = $1',
+      values: [bookId],
+    };
+    const updatedDetails = await pool.query(updatedDetailsQuery);
+
+    res.json({
+      message: 'Book details updated successfully',
+      updatedDetails: updatedDetails.rows[0],
+    });
   } catch (error) {
     res.status(500).json({ error: `Error updating book details: ${error.message}` });
   }
 });
+
 
 // Fetch most recent orders
 app.get('/recent-orders', async (req, res) => {

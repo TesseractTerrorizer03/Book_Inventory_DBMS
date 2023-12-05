@@ -10,7 +10,7 @@ function BookDetail({ title, author, ratings, reviews, price }) {
       <p className="book-reviews">Reviews: {reviews}</p>
       <p className="book-price">Price: ${price}</p>
     </div>
-  );
+  );  
 }
 
 export default BookDetail;
