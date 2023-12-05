@@ -1,0 +1,37 @@
+.top-books-container {
+    padding: 20px;
+  }
+  
+  .search-container {
+    display: flex;
+    margin-bottom: 20px;
+  }
+  
+  input {
+    flex: 1;
+    padding: 10px;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .search-button {
+    padding: 10px;
+    background-color: #5cb85c;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .search-button:hover {
+    background-color: #4cae4c;
+  }
+  .top-books-heading {
+    /* font-size: 20px; */
+    /* margin: auto;
+     */
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }

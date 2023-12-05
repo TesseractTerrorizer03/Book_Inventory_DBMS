@@ -1,8 +1,8 @@
-
 .tabs {
     display: flex;
     background-color: #f1f1f1;
     padding: 10px;
+    /* justify-content: space-between; */
   }
   
   .tab {
@@ -16,5 +16,19 @@
   
   .tab:hover {
     background-color: #ddd;
+  } 
+  .logout-button {
+    margin-left: 10px;
+    padding: 10px;
+    background-color: #ff6347; 
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: auto;
+  }
+  
+  .logout-button:hover {
+    background-color: #d9534f; 
   }
   

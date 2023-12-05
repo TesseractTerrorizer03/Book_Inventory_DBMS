@@ -6,7 +6,7 @@ import Purchases from './components/Purchases.js';
 import ModifyProduct from './components/ModifyBookDetails';
 import Summary from './components/Summary';
 import AddTagGenre from './components/AddTagGenre';
-
+import Topbooks from './components/Topbooks.js';
 
 const App = () => (
   <Router>
@@ -17,6 +17,7 @@ const App = () => (
         <Route path="/modify" element={<ModifyProduct />} />
         <Route path="/summary" element={<Summary />} />
         <Route path="/taggenre" element={<AddTagGenre />} />
+        <Route path="/topbooks" element={<Topbooks />} />
       </Routes>
     </div>
   </Router>

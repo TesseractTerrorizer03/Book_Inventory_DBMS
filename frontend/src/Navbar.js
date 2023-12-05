@@ -2,7 +2,12 @@ import React from 'react';
 import './Navbar.css';
 import { Link } from 'react-router-dom';
 
+
 function Navbar() {
+  const handleLogout = () => {
+    // Implement your logout logic here
+    console.log('Logout clicked');
+  }
   return (
     <div>
       {/* Your Navbar code here */}
@@ -12,6 +17,7 @@ function Navbar() {
         <Link to="/summary" className="tab">Summary</Link>
         <Link to="/taggenre" className="tab">Add Tags / Genres</Link>
 
+        <Link to="/" className=" tab logout-button" onclick={handleLogout}>Logout</Link>
       </nav>
 
     </div>

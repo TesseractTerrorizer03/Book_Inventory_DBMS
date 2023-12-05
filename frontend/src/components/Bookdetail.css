@@ -1,0 +1,19 @@
+.book-detail-container {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .book-title {
+    font-size: 1.2em;
+    margin-bottom: 8px;
+  }
+  
+  .book-author,
+  .book-ratings,
+  .book-reviews,
+  .book-price {
+    margin-bottom: 4px;
+  }
+  

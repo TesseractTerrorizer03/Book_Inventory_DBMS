@@ -11,6 +11,9 @@ const Login = () =>{
     function redirect(){
         navigate("/purchase")
     }
+    function redirect_user(){
+        navigate("/topbooks")
+    }
     const [userlog,setUserlog]=useState({
         email:"",
         password:"",
@@ -71,7 +74,7 @@ const Login = () =>{
                 // onChange={e => setPassword(e.target.value)}
                 required
                 />
-                <button type="submit" class="form_submit" onClick={redirect}>Log In as user </button>
+                <button type="submit" class="form_submit" onClick={redirect_user}>Log In as user </button>
                 <button type="submit" class="form_submit" onClick={redirect}>Log In as admin </button>
                 {/* <input
                 type="submit"
