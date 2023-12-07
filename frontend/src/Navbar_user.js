@@ -13,7 +13,7 @@ function UserNavbar() {
     <Link to="/topbooks" className="tab">Top Books</Link>
     <Link to="/my-reviews" className="tab">My Reviews</Link>
     {/* <Link to="/" className="tab">Summary</Link> */}
-    <Link to="/" className=" tab logout-button" onclick={handleLogout}>Logout</Link>
+    <Link to="/" className=" tab logout-button" onClick={handleLogout}>Logout</Link>
 
      </nav>
   );

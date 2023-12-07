@@ -35,3 +35,76 @@
     font-weight: bold;
     margin-bottom: 20px;
   }
+
+  .top-books-container {
+    padding: 20px;
+  }
+  
+  .search-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .input-container {
+    flex: 1;
+  }
+  
+  .input-container input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .button-container {
+    margin-left: 10px;
+  }
+  
+  .search-button {
+    padding: 10px;
+    background-color: #5cb85c;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .search-button:hover {
+    background-color: #4cae4c;
+  }
+  
+  .top-books-heading {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  .search-results-container {
+    margin-top: 20px;
+  }
+  
+  .search-results-container ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .search-results-container li {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    cursor: pointer;
+  }
+  
+  .search-results-container li:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .searching-divs {
+    margin: 20px;
+  }
+  .outermost-div{
+    margin: 20px;
+  }

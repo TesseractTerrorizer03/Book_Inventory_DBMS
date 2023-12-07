@@ -1,15 +1,18 @@
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
+const bodyParser = require('body-parser');
 const app = express();
-app.use(cors());
+// app.use(cors());
+app.use(cors({ origin: 'http://localhost:3001' }));
+app.use(bodyParser.json());
 
 const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
   database: 'bookstore_db',
-  password: 'shashwat03',
-  port: 5432, 
+  password: 'pant2922',
+  port: 5432,
 });
 
 app.get('/home', async (req, res) => {
@@ -105,6 +108,26 @@ app.get('/purchase', async (req, res) => {
   }
 });
 
+// Getting user reviews
+app.get('/my-reviews', async (req, res) => {
+  try {
+    const cust_id = req.query.customer_id; // Get customer ID from URL path
+
+    const query = {
+      text: 'SELECT * FROM ORDERS WHERE customer_id = $1 LEFT JOIN Reviews on Reviews.user_id = Orders.customer_id  ORDER BY order_date DESC',
+      values: [cust_id],
+    };
+
+    const client = await pool.connect();
+    const result = await client.query(query);
+    client.release();
+
+    res.json({ orders: result.rows });
+  } catch (error) {
+    res.status(500).json({ error: `Error fetching orders: ${error.message}` });
+  }
+});
+
 
 
 // Get customer details by ID
@@ -169,16 +192,20 @@ app.get('/book/:bookId', async (req, res) => {
       text: 'SELECT * FROM Reviews WHERE book_id = $1',
       values: [bookId],
     };
-
+    const authorQuery = {
+      text: 'SELECT author_name FROM Authors WHERE author_id IN (SELECT author_id FROM Book_Authors WHERE book_id = $1)',
+      values: [bookId],
+    };
     const client = await pool.connect();
     const bookResult = await client.query(bookQuery);
     const reviewsResult = await client.query(reviewsQuery);
+    const authorResult = await client.query(authorQuery);
     client.release();
 
     const bookDetails = bookResult.rows[0];
     const bookReviews = reviewsResult.rows;
-
-    res.json({ bookDetails, bookReviews });
+    const bookAuthors = authorResult.rows.map((author) => author.author_name);
+    res.json({ bookDetails, bookAuthors, bookReviews });
   } catch (error) {
     res.status(500).json({ error: `Error fetching book details: ${error.message}` });
   }
@@ -206,58 +233,24 @@ app.post('/place-order', async (req, res) => {
 
 
 // Modify book details
-// app.put('/modify', async (req, res) => {
-//   try {
-//     const bookId = req.params.bookId;
-//     const { title, publish, quantity} = req.body;
+app.post('/modify', async (req, res) => {
+  try {
+    const { bid, title, publish, quantity } = req.body;
+    // console.log(bookId)
+    const client = await pool.connect();
+    const updateBookQuery = {
+      text: 'UPDATE Book_Details SET title = $1, publish_date = $2, quantity = $3  WHERE book_id = $4',
+      values: [title, publish, quantity, bid],
+    };
+    await client.query(updateBookQuery);
+    client.release();
 
-//     const client = await pool.connect();
-//     const updateBookQuery = {
-//       text: 'UPDATE Books SET title = $1, publish = $2, quantity = $3  WHERE book_id = $4',
-//       values: [title, publish, quantity,bookId],
-//     };
-//     await client.query(updateBookQuery);
-//     client.release();
+    res.json({ message: 'Book details updated successfully' });
+  } catch (error) {
+    res.status(500).json({ error: `Error updating book details: ${error.message}` });
+  }
+});
 
-//     res.json({ message: 'Book details updated successfully' });
-//   } catch (error) {
-//     res.status(500).json({ error: `Error updating book details: ${error.message}` });
-//   }
-// });
-
-// app.put('/modify', async (req, res) => {
-//   try {
-//     const bookId = req.params.bookId;
-//     const { title, publish, quantity } = req.body;
-
-//     const client = await pool.connect();
-
-//     const updateBookQuery = {
-//       text: 'UPDATE Books SET title = $1, publish = $2, quantity = $3  WHERE book_id = $4 RETURNING *',
-//       values: [title, publish, quantity, bookId],
-//     };
-//     const updatedBook = await client.query(updateBookQuery);
-
-//     client.release();
-
-//     if (updatedBook.rows.length === 0) {
-//       return res.status(404).json({ error: 'Book not found' });
-//     }
-
-//     const updatedDetailsQuery = {
-//       text: 'SELECT * FROM Books WHERE book_id = $1',
-//       values: [bookId],
-//     };
-//     const updatedDetails = await pool.query(updatedDetailsQuery);
-
-//     res.json({
-//       message: 'Book details updated successfully',
-//       updatedDetails: updatedDetails.rows[0],
-//     });
-//   } catch (error) {
-//     res.status(500).json({ error: `Error updating book details: ${error.message}` });
-//   }
-// });
 
 app.get('/modify', async (req, res) => {
   try {
@@ -277,67 +270,91 @@ app.get('/modify', async (req, res) => {
   }
 });
 
-
-app.put('/modify', async (req, res) => {
+app.post('/addbook', async (req, res) => {
+  console.log(req.body)
+  // res.json({message:"chal rha"})
   try {
-    
-    const bookId = req.query.bookId;
-    const { title, publish, quantity } = req.body;
+    const { BookId, Title, PublishDate, Quantity } = req.body;
+    const rating = 0;
+    const result = await pool.query('INSERT INTO Book_Details (book_id, title, publish_date, rating , quantity) VALUES ($1, $2, $3, $4, $5) RETURNING *', [BookId, Title, PublishDate, rating, Quantity]);
 
-    const client = await pool.connect();
-
-    // Create an array to store the non-null updates
-    const updateValues = [];
-    const updateParams = [];
-
-    // Check each input and add non-null values to the update array
-    if (title !== null && title !== undefined) {
-      updateValues.push(`title = $${updateValues.length + 1}`);
-      updateParams.push(title);
-    }
-    if (publish !== null && publish !== undefined) {
-      updateValues.push(`publish = $${updateValues.length + 1}`);
-      updateParams.push(publish);
-    }
-    if (quantity !== null && quantity !== undefined) {
-      updateValues.push(`quantity = $${updateValues.length + 1}`);
-      updateParams.push(quantity);
-    }
-
-    // If there are no valid updates, return a response
-    if (updateValues.length === 0) {
-      client.release();
-      return res.status(400).json({ error: 'No valid updates provided' });
-    }
-
-    // Construct the dynamic update query
-    const updateBookQuery = {
-      text: `UPDATE Books SET ${updateValues.join(', ')} WHERE book_id = $${updateParams.length + 1} RETURNING *`,
-      values: [...updateParams, bookId],
-    };
-
-    // Execute the update query
-    const updatedBook = await client.query(updateBookQuery);
-
-    client.release();
-
-    if (updatedBook.rows.length === 0) {
-      return res.status(404).json({ error: 'Book not found' });
-    }
-
-    const updatedDetailsQuery = {
-      text: 'SELECT * FROM Books WHERE book_id = $1',
-      values: [bookId],
-    };
-    const updatedDetails = await pool.query(updatedDetailsQuery);
-
-    res.json({
-      message: 'Book details updated successfully',
-      updatedDetails: updatedDetails.rows[0],
-    });
+    res.status(201).json({ message: 'Book added successfully', newBook: result.rows[0] });
   } catch (error) {
-    res.status(500).json({ error: `Error updating book details: ${error.message}` });
+    console.error('Error adding book:', error.message);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
+});
+
+
+
+
+app.get('/test', (req, res) => {
+  // console.log("hello")
+  // res.json({ recentOrders: recentOrdersResult.rows });
+  res.json({ message: "hello" });
+})
+
+app.put('/modifynew/', async (req, res) => {
+  // try {
+
+  // const { bid,title, publish, quantity } = req.body;
+  console.log('Test')
+  console.log(req.body)
+
+  const client = await pool.connect();
+
+  const updateValues = [];
+  const updateParams = [];
+
+  if (title !== null && title !== undefined) {
+    updateValues.push(`title = $${updateValues.length + 1}`);
+    updateParams.push(title);
+  }
+  if (publish !== null && publish !== undefined) {
+    updateValues.push(`publish = $${updateValues.length + 1}`);
+    updateParams.push(publish);
+  }
+  if (quantity !== null && quantity !== undefined) {
+    updateValues.push(`quantity = $${updateValues.length + 1}`);
+    updateParams.push(quantity);
+  }
+
+  // If there are no valid updates, return a response
+  if (updateValues.length === 0) {
+    client.release();
+    return res.status(400).json({ error: 'No valid updates provided' });
+  }
+
+  // Construct the dynamic update query
+  const updateBookQuery = {
+    text: `UPDATE Books SET ${updateValues.join(', ')} WHERE book_id = $${updateParams.length + 1} RETURNING *`,
+    values: [...updateParams, bid],
+  };
+
+  // Execute the update query
+  const updatedBook = await client.query(updateBookQuery);
+
+  client.release();
+
+  if (updatedBook.rows.length === 0) {
+    return res.status(404).json({ error: 'Book not found' });
+  }
+
+  const updatedDetailsQuery = {
+    text: 'SELECT * FROM Books WHERE book_id = $1',
+    values: [bid],
+  };
+  const updatedDetails = await pool.query(updatedDetailsQuery);
+
+  res.json({
+    message: 'Book details updated successfully',
+    updatedDetails: updatedDetails.rows[0],
+  });
+
+
+  // } catch (error) {
+  // res.status(500).json({ error: `Error updating book details: ${error.message}` });
+  // }
 });
 
 
@@ -354,6 +371,77 @@ app.get('/recent-orders', async (req, res) => {
     res.json({ recentOrders: recentOrdersResult.rows });
   } catch (error) {
     res.status(500).json({ error: `Error fetching recent orders: ${error.message}` });
+  }
+});
+
+// Endpoint to fetch all genres and tags
+app.get('/taggenre', async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const genres = await client.query('SELECT genre_name FROM Genres');
+    const tags = await client.query('SELECT tag_name FROM Tags');
+    client.release();
+    res.json({ genres: genres.rows, tags: tags.rows });
+  } catch (error) {
+    res.status(500).json({ error: `Error fetching tags and genres: ${error.message}` });
+  }
+});
+
+
+// Endpoint to handle the search request
+app.post('/topbooks', async (req, res) => {
+  try {
+    const { genres, tags, excludeGenres, excludeTags, bookName, authorName } = req.body;
+
+    // Build the SQL query dynamically based on the search parameters
+    const query = `
+      SELECT Book_Details.book_id, Book_Details.title, Book_Details.rating, Authors.author_name
+      FROM Book_Details
+      JOIN Book_Genres ON Book_Details.book_id = Book_Genres.book_id
+      JOIN Genres ON Book_Genres.genre_id = Genres.genre_id
+      JOIN Book_Tags ON Book_Details.book_id = Book_Tags.book_id
+      JOIN Tags ON Book_Tags.tag_id = Tags.tag_id
+      JOIN Book_Authors ON Book_Details.book_id = Book_Authors.book_id
+      JOIN Authors ON Book_Authors.author_id = Authors.author_id
+      WHERE
+        (${genres.length === 0 ? 'true' : 'genres.name IN ($1:csv)'})
+        AND (${tags.length === 0 ? 'true' : 'tags.name IN ($2:csv)'})
+        AND (${excludeGenres.length === 0 ? 'true' : 'genres.name NOT IN ($3:csv)'})
+        AND (${excludeTags.length === 0 ? 'true' : 'tags.name NOT IN ($4:csv)'})
+        AND (${bookName ? 'books.name ILIKE $5' : 'true'})
+        AND (${authorName ? 'authors.name ILIKE $6' : 'true'})
+    `;
+
+    const queryParams = [
+      genres.map((genre) => genre.toLowerCase()),
+      tags.map((tag) => tag.toLowerCase()),
+      excludeGenres.map((genre) => genre.toLowerCase()),
+      excludeTags.map((tag) => tag.toLowerCase()),
+      `%${bookName ? bookName.toLowerCase() : ''}%`,
+      `%${authorName ? authorName.toLowerCase() : ''}%`,
+    ];
+
+    const { rows } = await pool.query(query, queryParams);
+
+    res.json(rows);
+  } catch (error) {
+    console.error('Error executing search query:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+// review addition endpoint
+app.post('/addreview', async (req, res) => {
+  try {
+    const { BookId, ReviewText, ReviewDate, Rating, UserId } = req.body;
+
+    const result = await pool.query('INSERT INTO Reviews (book_id, review_text, review_date, rating, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING *', [BookId, ReviewText, ReviewDate, Rating, UserId]);
+
+    res.status(201).json({ message: 'Review added successfully', newReview: result.rows[0] });
+  } catch (error) {
+    console.error('Error adding review:', error.message);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

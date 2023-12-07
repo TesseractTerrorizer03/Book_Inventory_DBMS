@@ -88,7 +88,7 @@ const Login = () =>{
             <div className="options">
                 <span>OR</span>
             </div>
-            {/* <button class="acc"id="newacc" type="button" onclick="document.getElementById('loginbox').style.display='none';document.getElementById('account').style.display='block';document.getElementById('newacc').style.display='none';document.getElementById('log').style.display='block'">Create New account</button> */}
+            {/* <button class="acc"id="newacc" type="button" onClick="document.getElementById('loginbox').style.display='none';document.getElementById('account').style.display='block';document.getElementById('newacc').style.display='none';document.getElementById('log').style.display='block'">Create New account</button> */}
             <div className="account_div">
                 Don't have an Account?{" "}
                 {/* <button
